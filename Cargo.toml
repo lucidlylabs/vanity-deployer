@@ -1,0 +1,11 @@
+[package]
+name = "vanity-deployer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+alloy = "0.15.9"
+dotenvy = "0.15.7"
+hex = "0.4.3"
+rayon = "1.10.0"
+tokio = { version="1.45.0", features= ["rt-multi-thread"] }
