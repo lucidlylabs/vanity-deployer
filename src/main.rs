@@ -5,6 +5,7 @@ use alloy::{
 };
 use rayon::prelude::*;
 use std::str::FromStr;
+use std::thread;
 use std::{env, fs};
 
 alloy::sol!(
@@ -33,6 +34,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _provider = ProviderBuilder::new().connect(&rpc_url).await?;
     let _signer: PrivateKeySigner = private_key.parse().expect("expecting a private key");
+
+    let core_count = thread::available_parallelism()?.get();
+    println!("system has {} logical CPU cores", core_count);
 
     let (name, address) =
         find_vanity_address(&_deployer_address, &_desired_prefix, &_creation_code_hash)?;
