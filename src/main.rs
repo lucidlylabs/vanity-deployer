@@ -68,9 +68,9 @@ fn find_vanity_address(
     desired_prefix: &str,
     creation_code_hash: &FixedBytes<32>,
 ) -> Result<(String, Address), Box<dyn std::error::Error>> {
-    let base_name = "Transaction Bundler V1.0";
+    let base_name = "TxBunlder V1.0";
     const CHUNK_SIZE: u64 = 1000;
-    const MAX_COUNTER: u64 = 1_000_000_000; // Large but finite range
+    const MAX_COUNTER: u64 = 1_000_000_000;
 
     let result = (0..MAX_COUNTER / CHUNK_SIZE)
         .into_par_iter()
@@ -80,25 +80,35 @@ fn find_vanity_address(
                 let name = format!("{}{}", base_name, counter);
                 let address = compute_create3_address(deployer_address, &name, creation_code_hash);
                 if counter % 10000 == 0 {
-                    println!("Checked {} names...", counter);
+                    println!("checked {} names: ", counter);
                 }
                 if address
                     .to_checksum(None)
                     .to_lowercase()
                     .starts_with(desired_prefix)
                 {
-                    return Some(counter);
+                    return true;
                 }
             }
-            None::<u64>
+            false
         });
 
     match result {
-        Some(counter) => {
-            let name = format!("{}{}", base_name, counter);
-            let address = compute_create3_address(deployer_address, &name, creation_code_hash);
-            Ok((name, address))
+        Some(chunk) => {
+            let start = chunk * CHUNK_SIZE;
+            for counter in start..start + CHUNK_SIZE {
+                let name = format!("{}{}", base_name, counter);
+                let address = compute_create3_address(deployer_address, &name, creation_code_hash);
+                if address
+                    .to_checksum(None)
+                    .to_lowercase()
+                    .starts_with(desired_prefix)
+                {
+                    return Ok((name, address));
+                }
+            }
+            Err("match not found in chunk".into())
         }
-        None => Err("No matching address found within range".into()),
+        None => Err("no matching address found within range".into()),
     }
 }
